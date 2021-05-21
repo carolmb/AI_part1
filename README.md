@@ -1,1 +1,1 @@
-# ia_part1
+# Artificial Inteligence (part 1) - Final Project
