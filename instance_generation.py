@@ -3,10 +3,14 @@ import igraph as ig
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
-error = 0.0001
-
+error = 0.0001 # constante utilizada como limite para considerar dois valores float como iguais
 
 class Point:
+    """
+        Representação de um ponto com coordenadas x, y.
+        Alguns métodos foram implementados para tratar, por exemplo,
+        quando dois pontos são considerados iguais.
+    """
 
     def __init__(self, x, y):
         self.x = x
@@ -30,7 +34,13 @@ class Point:
 
 
 class Segment:
+    """
+        Representação de um segmento de reta, dados dois pontos P1 e P2 como entrada.
+        Os coeficientes que descrevem a reta logo são calculados.
+        b é o coeficiente angular
+        Método para verificar quando há interseção entre dois segmentos foi implementado também.
 
+    """
     def _b(self):
         if self.p1.x == self.p2.x:
             return 0
@@ -50,6 +60,11 @@ class Segment:
         x = (other.a - self.a) / (self.b - other.b)  # teste para evitar denominador 0 já foi feito antes
         return x
 
+    '''
+        Avalia se dois segmentos possuem interseção ou não.
+        Para isso, são consideradas as retas onde os segmentos passam, é calculado o ponto
+        da interseção (se houver) e por fim, se esse ponto pertence aos dois segmentos. 
+    '''
     def intersects(self, other):
         # nesse caso, quando os pontos da extremidade são iguais não consideramos
         if self.p1 == other.p1 or self.p1 == other.p2:
@@ -135,6 +150,11 @@ def get_points(n):
     return points
 
 
+'''
+Método para a geração de instâncias de grafos planos. 
+O argumento n é o tamanho do grafo dado como saída. 
+O algoritmo segue a sugestão de implementação da questão 6.10 do livro do Russel.
+'''
 def get_color_map_instance(n):
     points = get_points(n)
 
@@ -165,6 +185,10 @@ def get_color_map_instance(n):
 
 if __name__ == '__main__':
 
+    '''
+    Se esse arquivo for executado sozinho, é possível rodar esse pequeno teste de geração de instâncias 
+    com visualização.
+    '''
     for n in range(100, 251, 50):
         print(n)
         for j in range(10):

@@ -1,18 +1,23 @@
 import numpy as np
-import igraph as ig
+import igraph as ig  # utilizei a representação de grafo da biblioteca python-igraph,
+# para não precisar implementar minha própria classe Grafo
 import instance_generation as instances
 
 '''
+Descrição do exercício 6.10. 
+
 Now try to find k-colorings of each map, for both
 k=3 and k =4, 
-    backtracking, OK
-    backtracking with forward checking OK
-    backtracking with MAC OK
+    backtracking,
+    backtracking with forward checking
+    backtracking with MAC
     using min-conflicts
     
 Construct a table of average run times for each algorithm for values
 of n up to the largest you can manage. Comment on your results.
 '''
+
+# Método auxiliar do backtrack, verifica se a solução é válida para o caso do backtrack simples
 def valid_backtrack(g, k):
     c = set()
     for e in g.es:
@@ -31,40 +36,12 @@ def valid_backtrack(g, k):
     return True
 
 
+# Método auxiliar do backtrack, varifica se a solução é válida para o caso do backtrack com restrições
 def valid_backtrack_fc(g, k):
     return not -1 in g.vs['color']
 
 
-def dead_end(steps, fail):
-    return tuple(steps) in fail
-
-
-def get_rules_backtrack(root, g, k):
-    return np.arange(k)
-
-
-# forward checking
-def get_rules_backtrack_fc(root, g, k):
-    invalid_colors = set()
-    for v in g.neighbors(root):
-        c = g.vs[v]['color']
-        invalid_colors.add(c)
-
-    rules = []
-    for c in range(k):
-        if c in invalid_colors:
-            continue
-        else:
-            rules.append(c)
-    return rules
-
-
-def apply_rule(v, g, c):
-    g_copy = g.copy()
-    g_copy.vs[v]['color'] = c
-    return g_copy
-
-
+# Método auxiliar do backtrack, escolhe próximo vértice a ter cor escolhida
 def get_next(g):
     degrees = [g.degree(i) if c == -1 else -1 for i, c in enumerate(g.vs['color'])]
     if set(degrees) == set({-1}):
@@ -72,10 +49,12 @@ def get_next(g):
     return np.argmax(degrees)
 
 
+# Método auxiliar do backtrack, para versão simples do algoritmo, não faz alterações nos valores possíveis
 def add_inference_backtrack(inferences, g, val):
     return True, inferences
 
 
+# Método auxiliar do backtrack
 def add_inference_backtrack_fc(inferences, g, x_i):
     neighbors = g.neighbors(x_i)
     c = g.vs[x_i]['color']
@@ -90,6 +69,7 @@ def add_inference_backtrack_fc(inferences, g, x_i):
     return True, inferences
 
 
+# Método auxiliar do backtrack
 def remove_inconsistent_values(inferences, x_i, x_j):
     removed = False
     for x in inferences[x_i].copy():
@@ -100,7 +80,8 @@ def remove_inconsistent_values(inferences, x_i, x_j):
     return removed, inferences
 
 
-# ac-3
+# Método auxiliar do backtrack
+# ac-3 conforme definido no livro do Russel
 def ac3(inferences, g, arcs):
     queue = arcs
     new_inferences = inferences.copy()
@@ -119,6 +100,7 @@ def ac3(inferences, g, arcs):
     return True, inferences
 
 
+# Método auxiliar do backtrack
 def add_inference_backtrack_mac(inferences, g, x_i):
     x_i_neighbors = g.neighbors(x_i)
     inferences[x_i] = {g.vs[x_i]['color']}
@@ -134,11 +116,11 @@ def _backtrack(g, k, inferences, add_inference, valid_colors):
     if valid_colors(g, k):
         return g
 
-    val = get_next(g)
+    val = get_next(g) # escolhe a próxima variável a ter um valor atribuído
 
     if val == -1:
         return False
-    rules = inferences[val]
+    rules = inferences[val] # as regras possíveis de serem aplicadas são as cores possíveis de serem aplicadas
     for rule in rules:
         g.vs[val]['color'] = rule
         inference_possible, new_inference = add_inference(inferences.copy(), g, val)
@@ -151,13 +133,24 @@ def _backtrack(g, k, inferences, add_inference, valid_colors):
     return False
 
 
+'''
+A partir do valor dado para o parâmetro method, esse método chama o backtrack com diferentes configurações. 
+method = 
+    '': para a versão básica
+    'forward checking': para versão com propagação de restrições mais simples
+    'MAC': para versão com propagação de restrições mais completa
+    
+Essa rotina retorna uma tupla:
+    valor verdadeiro ou falso para solução viável encontrada
+    o grafo dado como entrada retorna com uma nova propriedade 'color' com as cores da solução
+'''
 def backtrack(g, k, method=''):
     def get_name(pos):
         A = ['red', 'blue', 'green', 'orange', 'gray']
         return A[pos]
 
     g.vs['color'] = -1
-    inferences = [set(np.arange(k)) for i in range(g.vcount())]
+    inferences = [set(np.arange(k)) for i in range(g.vcount())] # matrix auxiliar com os valores possíveis para cada X_i
     if method == '':
         g_result = _backtrack(g.copy(), k, inferences, add_inference_backtrack, valid_backtrack)
     elif method == 'forward checking':
@@ -181,13 +174,17 @@ def backtrack(g, k, method=''):
         return False, g
 
 
+# ---------------------------------------------------------------------------
+# Método auxiliar do min_conflicts
+# Inicializa as cores do grafo de forma aleatória considernado que são possíveis só k cores
 def init_colors(g, k):
     n = g.vcount()
     colors = np.random.randint(0, k, n, dtype='int')
     g.vs['color'] = colors
     return g
 
-
+# Método auxiliar do min_conflicts
+# Escolhe a variável que possui mais conflitos para ser a próxima a ter valor atribuído
 def conflict_var(g):
     count_conflicts = dict()
     for node1 in g.vs:
@@ -207,7 +204,8 @@ def conflict_var(g):
 
     return max_node
 
-
+# Método auxiliar do min_conflicts
+# Escolhe a cor que será dada para a variável considerando se tem cor não utilizada pelos vizinhos ainda disponível
 def get_value_min_conflict(g, k, x):
 
     colors = []
@@ -225,6 +223,13 @@ def get_value_min_conflict(g, k, x):
         return unique[arg]
 
 
+'''
+Método heurístico de mínimo conflitos.
+Recebe como entrada um grafo g e quantidade de cores k permitida.
+Retorna uma tupla:
+    valor verdadeiro ou falso indicando se foi encontrada uma solução
+    o grafo dado como entrada com propriedade 'color' que tem as cores da solução encontrada
+'''
 def min_conflicts(g, k, arg=None):
     names = ['red', 'blue', 'orange', 'green', 'gray']
 
@@ -239,11 +244,12 @@ def min_conflicts(g, k, arg=None):
         x_value = get_value_min_conflict(current_state, k, x)
         current_state.vs[x]['color'] = x_value
 
-    g.vs['color'] = 'gray'
+    g.vs['color'] = 'gray' # quando não tem solução, a cor dos vértices é cinza
     return False, g
 
 
-def get_toy():  # australia
+# ---------------------------------------------------------------------------
+def get_toy():  # exemplo australia do livro do russel
     g = ig.Graph()
     g.add_vertices(7)
     g.vs['name'] = ['wa', 'nt', 'q', 'nsw', 'v', 'sa', 't']
@@ -253,7 +259,14 @@ def get_toy():  # australia
     return g
 
 
+# ---------------------------------------------------------------------------
 if __name__ == '__main__':
+
+    '''
+    Aqui é possível testar os métodos para pequenas instâncias geradas aleatoriamente. 
+    A solução é plotada na forma de grafo com os vértices coloridos e as posições dos vértices conforme foi gerado
+    no quadrado 1 por 1. 
+    '''
     for _ in range(5):
         g = instances.get_color_map_instance(5)
         print(g)
