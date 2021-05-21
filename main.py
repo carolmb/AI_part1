@@ -76,37 +76,65 @@ def run_tests():
 def print_results():
 
     for k in [3, 4]:
-        mean_time = np.fromfile('data/test_curves_average_time_%d.txt' % k, delimiter=',')
-        std_time = np.fromfile('data/test_curves_std_time%d.txt' % k, delimiter=',')
-        results = np.fromfile('data/test_results_%d.txt' % k, delimiter=',')
+        mean_time = np.genfromtxt('data/test_curves_average_time_%d.txt' % k, delimiter=',')
+        std_time = np.genfromtxt('data/test_curves_std_time_%d.txt' % k, delimiter=',')
+        results = np.genfromtxt('data/test_results_%d.txt' % k, delimiter=',')
 
         N = len(mean_time)
+        cut = 15
+        plt.figure(figsize=(8, 5))
+        X = np.arange(5, 151, 5)[:cut]
 
-        plt.figure(figsize=(10, 5))
-        idxs = np.arange(0, N, 3)
-        plt.errorbar(np.arange(len(idxs)), mean_time[idxs, 0], marker='x', yerr=std_time[:, 0], alpha=0.7, label='backtrack')
-        plt.errorbar(np.arange(len(idxs)), mean_time[idxs, 1], yerr=std_time[:, 1], alpha=0.7, label='backtrack forward checking')
-        plt.errorbar(np.arange(len(idxs)), mean_time[idxs, 2], yerr=std_time[:, 2], alpha=0.7, label='backtrack MAC')
-        plt.errorbar(np.arange(len(idxs)), mean_time[idxs, 3], yerr=std_time[:, 3], alpha=0.7, label='min conflicts')
-        plt.legend(prop={'size': 6}, bbox_to_anchor=(1.01, 1.0))
+        for i in range(3):
+            idxs = np.arange(i, N, 3)[:cut]
+
+            plt.errorbar(X, mean_time[idxs, 0], c='red', marker='x', yerr=std_time[idxs, 0], alpha=0.5, label='backtrack')
+            plt.errorbar(X, mean_time[idxs, 1], c='blue', marker='x', yerr=std_time[idxs, 1], alpha=0.5, label='backtrack forward checking')
+            plt.errorbar(X, mean_time[idxs, 2], c='purple', marker='x', yerr=std_time[idxs, 2], alpha=0.5, label='backtrack MAC')
+            plt.errorbar(X, mean_time[idxs, 3], c='green', marker='x', yerr=std_time[idxs, 3], alpha=0.5, label='min conflicts')
+
+        # source: https://stackoverflow.com/questions/13588920/stop-matplotlib-repeating-labels-in-legend
+        handles, labels = plt.gca().get_legend_handles_labels()
+        handle_list, label_list = [], []
+        for handle, label in zip(handles, labels):
+            if label not in label_list:
+                handle_list.append(handle)
+                label_list.append(label)
+
+        plt.legend(handle_list, label_list, bbox_to_anchor=(1.01, 1.0))
         plt.title("k = %d" % k)
         plt.xlabel('número de vértices')
         plt.ylabel("tempo médio em segundos")
+        plt.grid()
         plt.tight_layout()
         plt.savefig('curves_%d.pdf' % k)
         plt.show()
 
-        '''X = np.arange(0, 151, 5)
-        for x in X:
-            for i in range(3):
-                print("%d & %.3fs & %.3fs & %.3fs & %.3fs \\\\" % (x, t1, t2, t3, t4))
-                print(" %s & %s & %s & %s \\\\" % (r1, r2, r3, r4))
-        '''
+        ## PARA IMPRIMIR A TABELA EM LATEX
+        # X = np.arange(5, 151, 5)
+        # idxs = np.arange(0, N, 3)
+        # for i, x in zip(idxs, X):
+        #     print("%d & %.3f & %.3f & %.3f & %.3f & %.3f & %.3f & %.3f & %.3f & %.3f & %.3f "
+        #           "& %.3f & %.3f \\\\" %
+        #           (x, mean_time[i, 0], mean_time[i+1, 0], mean_time[i+2, 0],
+        #            mean_time[i, 1], mean_time[i+1, 1], mean_time[i+2, 1],
+        #            mean_time[i, 2], mean_time[i+1, 2], mean_time[i+2, 2],
+        #            mean_time[i, 3], mean_time[i+1, 3], mean_time[i+2, 3]))
+
+        # for i, x in enumerate(X):
+        #     print("%d & %.2f\\%% & %.2f\\%% & %.2f\\%% & %.2f\\%% & %.2f\\%% & %.2f\\%% %.2f\\%% & "
+        #           "%.2f\\%% & %.2f\\%% & %.2f\\%% & %.2f\\%% & %.2f\\%%\\\\" %
+        #           (x, results[i, 0]/20, results[i + 1, 0]/20, results[i + 2, 0]/20,
+        #            results[i, 1]/20, results[i + 1, 1]/20, results[i + 2, 1]/20,
+        #            results[i, 2]/20, results[i + 1, 2]/20, results[i + 2, 2]/20,
+        #            results[i, 3]/20, results[i + 1, 3]/20, results[i + 2, 3]/20))
+
+
 
 
 if __name__ == '__main__':
 
     # generate_samples()
-    run_tests()
+    # run_tests()
     print_results()
 
